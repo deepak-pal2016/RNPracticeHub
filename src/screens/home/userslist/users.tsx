@@ -73,7 +73,7 @@ const avatarBaseStyle = {
 
   const renderItem = ({ item }: any) => {
     return (
-      <TouchableOpacity onPress={()=> navigation.navigate('Userchat', {'userdata':item})} style={styles.card}>
+      <TouchableOpacity onPress={()=> navigation.navigate('Userchat', {'reciever':item})} style={styles.card}>
         <View
           style={[
             avatarBaseStyle,

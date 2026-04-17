@@ -105,7 +105,6 @@ const Dashboard: FC = () => {
     try {
       showLoader();
       const resp: any = await dispatch(Getallusertask(userData?._id));
-      console.log(resp, '-3-3-3');
 
       if (resp?.payload?.status === true) {
         await dispatch(Getuserlist(userData?.email)).unwrap();

@@ -1,142 +1,270 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { View, Platform, TouchableOpacity } from 'react-native';
-import React, { FC, useCallback, useState, useEffect, useContext } from 'react';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  GiftedChat,
-  InputToolbar,
-  Send,
-  Bubble,
-} from 'react-native-gifted-chat';
-
+  View,
+  FlatList,
+  TextInput,
+  TouchableOpacity,
+  Platform,
+  KeyboardAvoidingView,
+} from 'react-native';
+import React, { FC, useState, useEffect, useContext, useRef } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import chatStyles from '@styles/chatStyles';
+import { UserData, UserDataContext } from '../../../context/userDataContext';
 import { ThemeContext } from '../../../context/themeContext';
-import { DarkTheme, Header, LightTheme, TextView } from '@components/index';
-import { Colors } from '@constant/index';
+import {
+  CommonLoader,
+  DarkTheme,
+  Header,
+  LightTheme,
+  TextView,
+} from '@components/index';
+import { cardShadow, Colors, Icon } from '@constant/index';
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from '@constant/dimentions';
+import Socket from '@services/socket/socket';
+import { fetchuserchat } from '@redux/slices/chatSlice';
+import { useDispatch, useSelector } from 'react-redux';
+//@ts-ignore
+import type { AppDispatch } from '../../../redux/store';
+import { showError, showSuccess } from '@components/Flashmessge';
 
 const Userchat: FC<any> = props => {
-  const { userdata } = props.route.params;
+  const insets = useSafeAreaInsets();
+  const dispatch = useDispatch<AppDispatch>();
+  const { reciever } = props.route.params;
+  const { showLoader, hideLoader } = CommonLoader();
+  const { userData, setIsLoggedIn } = useContext<UserData>(UserDataContext);
   const [text, setText] = useState('');
   const [messages, setMessages] = useState<any[]>([]);
   const { theme } = useContext(ThemeContext);
   const currentTheme = theme === 'light' ? LightTheme : DarkTheme;
-  const keyboardVerticalOffset = useKeyboardVerticalOffset();
-
-  const insets = useSafeAreaInsets();
+  const styles = chatStyles(currentTheme);
+  const chatState = useSelector(
+    (state: any) => state?.fetchchat?.data?.data || [],
+  );
+  const flatlistRef = useRef<FlatList>(null);
 
   useEffect(() => {
-    setMessages([
-      {
-        _id: 1,
-        text: 'Hello 👋',
-        createdAt: new Date(),
-        user: { _id: 2, name: 'System' },
-      },
-    ]);
+    Socket.on('connect', () => {
+      console.log('Socket connected:', Socket.id);
+    });
+
+    return () => {
+      Socket.off('connect');
+    };
   }, []);
 
-  const onSend = useCallback((newMessages: any[] = []) => {
-    setMessages(prev => GiftedChat.append(prev, newMessages));
-  }, []);
+  useEffect(() => {
+    if (chatState?.length) {
+      setMessages(prev => {
+        const ids = new Set(prev.map(m => m._id));
+        //@ts-ignore
+        const newData = chatState.filter(m => !ids.has(m._id));
+        return [...prev, ...newData];
+      });
+    }
+  }, [chatState]);
 
-  // ✅ WhatsApp bubble
-  const renderBubble = (props: any) => (
-    <Bubble
-      {...props}
-      wrapperStyle={{
-        right: { backgroundColor: '#25D366' },
-        left: { backgroundColor: '#f0f0f0' },
-      }}
-      textStyle={{
-        right: { color: '#fff' },
-        left: { color: '#000' },
-      }}
-    />
-  );
+  useEffect(() => {
+    flatlistRef.current?.scrollToEnd({ animated: true });
+  }, [messages]);
 
-  // ✅ Input fix (MOST IMPORTANT)
-  const renderInputToolbar = (props: any) => (
-    <InputToolbar
-      {...props}
-      containerStyle={{
-        borderTopWidth: 0,
-        padding: 6,
-        backgroundColor: '#fff',
-        paddingBottom: Platform.OS === 'android' ? 8 : 20,
-      }}
-    />
-  );
+  useEffect(() => {
+    const fetchchat = async () => {
+      try {
+        showLoader();
 
-  // ✅ Send button
-  const renderSend = (props: any) => (
-    <Send {...props}>
+        const body = {
+          senderId: userData?._id,
+          receiverId: reciever?._id,
+        };
+
+        const resp = await dispatch(fetchuserchat(body));
+        if (resp?.payload?.success === true) {
+          // showSuccess('chat fetched successfully..');
+        } else {
+          showError('failed to fetch chat');
+        }
+      } catch (error) {
+        console.log('error', error);
+      } finally {
+        hideLoader();
+      }
+    };
+
+    fetchchat();
+  }, [dispatch, userData?._id, reciever?._id]);
+
+  useEffect(() => {
+    if (userData?._id) {
+      Socket.emit('join', userData?._id); // current user id
+      Socket.on('receivemessage', msg => {
+        if (!msg._id) {
+          msg._id = Date.now().toString(); // fallback id
+        }
+        setMessages(prev => [msg, ...prev]);
+      });
+    }
+    return () => {
+      Socket.off('receivemessage');
+    };
+  }, [userData?._id]);
+
+  const sendMessage = () => {
+    if (!text.trim()) return;
+
+    const msg = {
+      _id: Date.now().toString(),
+      senderId: userData?._id,
+      receiverId: reciever?._id,
+      message: text,
+      messageType: 'text',
+    };
+     setMessages(prev => [...prev, msg]);
+    Socket.emit('sendmessage', msg);
+    setText('');
+  };
+
+  const renderItem = ({ item }: any) => {
+    const isMe = item.senderId === userData?._id;
+    return (
       <View
         style={{
-          backgroundColor: '#25D366',
-          borderRadius: 20,
-          padding: 10,
-          marginRight: 8,
-          marginBottom: 5,
+          flexDirection: 'row',
+          justifyContent: isMe ? 'flex-end' : 'flex-start',
+          marginVertical: 4,
+          paddingHorizontal: 10,
         }}
       >
-        <TextView style={{ color: '#fff' }}>➤</TextView>
+        <View
+          style={{
+            backgroundColor: isMe ? Colors.PRIMARY[100] : '#fff',
+            padding: 10,
+            borderRadius: 12,
+
+            // WhatsApp style bubble shape
+            borderTopRightRadius: isMe ? 0 : 12,
+            borderTopLeftRadius: isMe ? 12 : 0,
+
+            maxWidth: wp(80),
+            ...cardShadow // Android shadow
+          }}
+        >
+          {/* Message */}
+          <TextView
+            style={{
+              color: isMe ?  Colors.SECONDARY[100] : Colors.SECONDARY[200],
+            }}
+          >
+            {item.message}
+          </TextView>
+
+          {/* Media (optional) */}
+          {item?.mediaUrl && (
+            <TextView
+              style={{
+                marginTop: 5,
+                color: isMe ? Colors.SECONDARY[100] : Colors.SECONDARY[200],
+                fontSize: 12,
+              }}
+            >
+              {item.mediaUrl}
+            </TextView>
+          )}
+
+          {/* Time */}
+          <TextView
+            style={{
+              fontSize: 10,
+              color: isMe ? '#e0e0e0' : '#888',
+              alignSelf: 'flex-end',
+              marginTop: 4,
+            }}
+          >
+            {new Date(item.createdAt).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </TextView>
+        </View>
       </View>
-    </Send>
-  );
-
-  // ✅ Actions (attach/camera/emoji)
-  const renderActions = () => (
-    <View style={{ flexDirection: 'row', marginLeft: 10 }}>
-      <TouchableOpacity>
-        <TextView>📎</TextView>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={{ marginLeft: 10 }}>
-        <TextView>📷</TextView>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={{ marginLeft: 10 }}>
-        <TextView>😊</TextView>
-      </TouchableOpacity>
-    </View>
-  );
+    );
+  };
 
   return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor:
-          theme === 'dark' ? currentTheme?.background : Colors.PRIMARY[800],
-      }}
-    >
+    <View style={{ flex: 1, backgroundColor: currentTheme.background }}>
       <Header
         showheader
-        title={`Chat with ${userdata?.name || 'User'}`}
+        title={`Chat with ${reciever?.name || 'User'}`}
         showicons={false}
       />
 
-      <GiftedChat
-        messages={messages}
-        onSend={onSend}
-        user={{ _id: 1 }}
-        renderBubble={renderBubble}
-        renderInputToolbar={renderInputToolbar}
-        renderSend={renderSend}
-        renderActions={renderActions}
-        isCustomViewBottom
-        isAlignedTop
-        isAvatarOnTop
-        messagesContainerStyle={{
-          backgroundColor:
-            theme === 'dark' ? currentTheme?.background : Colors.PRIMARY[800],
-        }}
-        textInputProps={{
-          style: { color: theme === 'dark' ? currentTheme?.text : '#000' },
-          onChangeText: setText,
-        }}
-        // alwaysShowSend
-        // keyboardShouldPersistTaps="handled"
-      />
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <View style={{ flex: 1 }}>
+          <FlatList
+            data={[...(messages.length ? messages : chatState)].reverse()}
+            keyExtractor={item => item?._id.toString()}
+            renderItem={renderItem}
+            // inverted
+            ref={flatlistRef}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{
+              paddingTop: hp(2),
+              paddingBottom: hp(7),
+            }}
+          />
+        </View>
+        <View style={[styles.inputbar, { paddingBottom: insets.bottom || 8 }]}>
+          <TouchableOpacity>
+            <Icon
+              name="attach"
+              size={22}
+              color={currentTheme.text}
+              family="Ionicons"
+            />
+          </TouchableOpacity>
+
+          {/* 📷 */}
+          <TouchableOpacity style={{ marginLeft: hp(0.3) }}>
+            <Icon
+              name="camera"
+              size={22}
+              color={currentTheme.text}
+              family="Ionicons"
+            />
+          </TouchableOpacity>
+
+          {/* INPUT */}
+          <TextInput
+            style={styles.inputtext}
+            placeholder="Type a message"
+            placeholderTextColor={Colors.FLOATINGINPUT[100]}
+            value={text}
+            onChangeText={setText}
+          />
+
+          {/* 😊 */}
+          {/* <TouchableOpacity>
+            <TextView style={{ fontSize: 18 }}>😊</TextView>
+          </TouchableOpacity> */}
+
+          {/* SEND */}
+          <TouchableOpacity onPress={sendMessage} style={styles.sendBtn}>
+            <Icon
+              family="Ionicons"
+              name="send"
+              color={currentTheme.background}
+              size={18}
+            />
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
     </View>
   );
 };

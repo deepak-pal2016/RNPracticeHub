@@ -17,7 +17,7 @@ export type HomeStackProps = {
   Taskdetails:undefined;
   Taskstatus:undefined;
   Userchat: {
-    userdata: any;
+    reciever: any;
   };
 
 }

@@ -1,13 +1,47 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable no-undef */
 require('dotenv').config();
-const app = require('./src/app')
+const Chat = require('./src/models/chat');
+const { Server } = require('socket.io');
+const app = require('./src/app');
 const connectDB = require('./src/config/db');
-
+const server = require('http').createServer(app);
 const PORT = 5000;
 
-connectDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-  });
-}).catch((err) => {
-  console.log("❌ DB connection failed", err);
+const io = new Server(server, {
+  cors: { origin: '*' },
 });
+
+io.on('connection', socket => {
+  console.log('user conneced:', socket.id);
+
+  socket.on('join', userId => {
+    socket.join(userId);
+    console.log(`user ${userId} joined`);
+  });
+
+  
+  socket.on('sendmessage', async data => {
+    try {
+      const chat = await Chat.create(data);
+      // reciever ko messge bhejna
+      io.to(data.receiverId).emit('receivemessage', chat);
+    } catch (err) {
+      console.log('err in found', err);
+    }
+  });
+  // disconenect socket 
+  socket.on('disconnect', () => {
+    console.log('user disconnected',socket.id);
+  });
+});
+
+connectDB()
+  .then(() => {
+    server.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.log('DB connection failed', err);
+  });

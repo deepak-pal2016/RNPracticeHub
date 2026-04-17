@@ -71,6 +71,11 @@ const APiService = {
     return APIKit.post('completetask', payload, { headers });
   },
 
+  fetchuserchats:async(payload:any) => {
+    const headers = await headersdata(true)
+    return APIKit.post('getuserchats', payload, { headers });
+  },
+
   logout: async (payload:any) => {
     const headers = await headersdata(true);
     return APIKit.post('logoutuser', {}, { headers });

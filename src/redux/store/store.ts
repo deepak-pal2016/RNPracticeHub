@@ -6,6 +6,7 @@ import { UserlistReducers } from '@redux/slices/userSlice';
 import { StaticDataReducers } from '@redux/slices/staticdataSlice';
 import { AddtaskReducers,GetalltaskReducers,MarkedcompletedtaskReducers } from '@redux/slices/taskSlice';
 import { LogoutReucers } from '@redux/slices/authSlice';
+import { FetchchatReducer } from '@redux/slices/chatSlice';
 
 export const store = configureStore({
   reducer: {
@@ -16,7 +17,8 @@ export const store = configureStore({
     addtask: AddtaskReducers,
     logout: LogoutReucers,
     getalltask:GetalltaskReducers,
-    markedtask:MarkedcompletedtaskReducers
+    markedtask:MarkedcompletedtaskReducers,
+    fetchchat:FetchchatReducer
   },
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({

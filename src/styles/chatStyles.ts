@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import { cardShadow, Colors, Typography } from '@constant/index';
 import {
   widthPercentageToDP as wp,
@@ -13,14 +13,30 @@ const chatStyles = (theme: any) =>
     },
 
     sendBtn: {
-      marginRight: 10,
-      marginBottom: 5,
-      width: 35,
-      height: 35,
-      borderRadius: 18,
+      marginLeft: 10,
       backgroundColor: Colors.PRIMARY[100],
-      alignItems: 'center',
+      width: 40,
+      height: 40,
+      borderRadius: 20,
       justifyContent: 'center',
+      alignItems: 'center',
+    },
+    inputbar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 8,
+      borderTopWidth: 0.5,
+      borderColor: '#ccc',
+      backgroundColor: '#fff',
+    },
+    inputtext: {
+      flex: 1,
+      marginHorizontal: wp(2.1),
+      backgroundColor: '#f2f2f2',
+      borderRadius: hp(2),
+      paddingHorizontal: hp(2),
+      paddingVertical: Platform.OS === 'ios' ? 10 : hp(1.6),
+      color: '#000',
     },
   });
 

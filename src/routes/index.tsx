@@ -45,7 +45,7 @@ const Route: FC = () => {
 
   useEffect(() => {
     if (userData?._id) {
-      Socket.emit('join', userData?._id);
+      Socket.emit('user_online', userData?._id);
     }
   }, [userData]);
 

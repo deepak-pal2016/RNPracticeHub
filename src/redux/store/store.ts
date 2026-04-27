@@ -2,11 +2,12 @@
 
 import { configureStore } from '@reduxjs/toolkit';
 import { AuthReducers, RegisterReducers } from '@redux/slices/authSlice';
-import { UserlistReducers } from '@redux/slices/userSlice';
+import { UserlistReducers,onlineUserReducer } from '@redux/slices/userSlice';
 import { StaticDataReducers } from '@redux/slices/staticdataSlice';
 import { AddtaskReducers,GetalltaskReducers,MarkedcompletedtaskReducers } from '@redux/slices/taskSlice';
 import { LogoutReucers } from '@redux/slices/authSlice';
 import { FetchchatReducer } from '@redux/slices/chatSlice';
+
 
 export const store = configureStore({
   reducer: {
@@ -18,7 +19,8 @@ export const store = configureStore({
     logout: LogoutReucers,
     getalltask:GetalltaskReducers,
     markedtask:MarkedcompletedtaskReducers,
-    fetchchat:FetchchatReducer
+    fetchchat:FetchchatReducer,
+    onlineuser:onlineUserReducer
   },
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({

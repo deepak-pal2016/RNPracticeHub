@@ -24,6 +24,21 @@ export const Getuserlist = createAsyncThunk<
   }
 });
 
+const onlineUserSlice = createSlice({
+  name:'onlineuser',
+  initialState:{
+    users:[]
+  },
+  reducers:{
+    setOnlineUsers:(state,action) => {
+      state.users = action.payload
+    },
+    cleanOnlineUsers:(state,action)=>{
+      state.users = []
+    }
+  }
+})
+
 
 const initialState = {
     userlist: [] as Userprops[],
@@ -50,6 +65,6 @@ const userSlice = createSlice({
         })
 }
 })
-
-
+export const { setOnlineUsers, cleanOnlineUsers } = onlineUserSlice.actions;
+export const onlineUserReducer = onlineUserSlice.reducer;
 export const UserlistReducers = userSlice.reducer

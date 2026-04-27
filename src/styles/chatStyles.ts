@@ -14,7 +14,7 @@ const chatStyles = (theme: any) =>
 
     sendBtn: {
       marginLeft: 10,
-      backgroundColor: Colors.PRIMARY[100],
+      backgroundColor: Colors.PRIMARY[500],
       width: 40,
       height: 40,
       borderRadius: 20,
@@ -27,7 +27,7 @@ const chatStyles = (theme: any) =>
       padding: 8,
       borderTopWidth: 0.5,
       borderColor: '#ccc',
-      backgroundColor: '#fff',
+      backgroundColor:theme.text,
     },
     inputtext: {
       flex: 1,
@@ -37,6 +37,7 @@ const chatStyles = (theme: any) =>
       paddingHorizontal: hp(2),
       paddingVertical: Platform.OS === 'ios' ? 10 : hp(1.6),
       color: '#000',
+      right:hp(1)
     },
   });
 

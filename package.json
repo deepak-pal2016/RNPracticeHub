@@ -45,6 +45,7 @@
     "react-native-keyboard-controller": "^1.21.5",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-modal": "^14.0.0-rc.1",
+    "react-native-nitro-sound": "^0.2.14",
     "react-native-permissions": "^5.5.1",
     "react-native-reanimated": "^4.2.2",
     "react-native-responsive-screen": "^1.4.2",

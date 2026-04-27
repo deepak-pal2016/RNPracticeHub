@@ -31,8 +31,11 @@ import { useDispatch, useSelector } from 'react-redux';
 //@ts-ignore
 import type { AppDispatch } from '../../../redux/store';
 import { showError, showSuccess } from '@components/Flashmessge';
+import AudioRecorderPlayer from 'react-native-nitro-sound';
+
 
 const Userchat: FC<any> = props => {
+ const audioRecorderPlayer = AudioRecorderPlayer
   const insets = useSafeAreaInsets();
   const dispatch = useDispatch<AppDispatch>();
   const { reciever } = props.route.params;
@@ -47,21 +50,8 @@ const Userchat: FC<any> = props => {
     (state: any) => state?.fetchchat?.data?.data || [],
   );
   const flatlistRef = useRef<FlatList>(null);
-  const [onlineusers,setOnlineUsers] = useState<any>([])
-
-  useEffect(()=>{
-    Socket.emit('onlineusers',  (users:any) => {
-      setOnlineUsers(users)
-    })
-    return()=>{
-      Socket.off('onlineusers')
-    }
-  },[])
-
-  const isOnline = onlineusers.includes(reciever?._id);
-  console.log(isOnline,'iskopnnee',onlineusers,reciever?._id);
-  
-
+  const onlineusers = useSelector((state: any) => state?.onlineuser?.users);
+  const isonlineuser = onlineusers.includes(String(reciever?._id));
 
   useEffect(() => {
     Socket.on('connect', () => {
@@ -115,23 +105,21 @@ const Userchat: FC<any> = props => {
   }, [dispatch, userData?._id, reciever?._id]);
 
   useEffect(() => {
-    if (userData?._id) {
-      Socket.emit('join', userData?._id);
-      Socket.on('receivemessage', msg => {
-        if (!msg._id) {
-          msg._id = Date.now().toString();
-        }
-        setMessages(prev => [msg, ...prev]);
-      });
-    }
+    Socket.on('receivemessage', msg => {
+      if (!msg._id) {
+        msg._id = Date.now().toString();
+      }
+      setMessages(prev => [msg, ...prev]);
+    });
+
     return () => {
       Socket.off('receivemessage');
     };
-  }, [userData?._id]);
+  }, []);
 
   const sendMessage = () => {
     if (!text.trim()) return;
-
+    console.log('Socket connected:', Socket.connected);
     const msg = {
       tempId: Date.now().toString(),
       senderId: userData?._id,
@@ -141,7 +129,7 @@ const Userchat: FC<any> = props => {
       createdAt: new Date().toISOString(),
     };
     Socket.emit('sendmessage', msg);
-    setMessages(prev => [msg,...prev]);
+    setMessages(prev => [msg, ...prev]);
     setText('');
   };
 
@@ -215,7 +203,9 @@ const Userchat: FC<any> = props => {
     <View style={{ flex: 1, backgroundColor: currentTheme.background }}>
       <Header
         showheader
-        title={`Chat with ${reciever?.name || 'User'}`}
+        title={`${reciever?.name || 'User'} \n ${
+          isonlineuser ? 'online' : 'offline'
+        }`}
         showicons={false}
       />
 
@@ -246,24 +236,6 @@ const Userchat: FC<any> = props => {
           />
         </View>
         <View style={[styles.inputbar, { paddingBottom: insets.bottom || 8 }]}>
-          <TouchableOpacity>
-            <Icon
-              name="attach"
-              size={22}
-              color={currentTheme.text}
-              family="Ionicons"
-            />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={{ marginLeft: hp(0.3) }}>
-            <Icon
-              name="camera"
-              size={22}
-              color={currentTheme.text}
-              family="Ionicons"
-            />
-          </TouchableOpacity>
-
           {/* INPUT */}
           <TextInput
             style={styles.inputtext}
@@ -273,13 +245,43 @@ const Userchat: FC<any> = props => {
             onChangeText={setText}
           />
 
+          <TouchableOpacity>
+            <Icon
+              name="mic"
+              size={22}
+              color={currentTheme.background}
+              family="Ionicons"
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity>
+            <Icon
+              name="attach"
+              size={22}
+              color={currentTheme.background}
+              family="Ionicons"
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={{ marginLeft: hp(0.3) }}>
+            <Icon
+              name="camera"
+              size={22}
+              color={currentTheme.background}
+              family="Ionicons"
+            />
+          </TouchableOpacity>
+
           {/* 😊 */}
           {/* <TouchableOpacity>
             <TextView style={{ fontSize: 18 }}>😊</TextView>
           </TouchableOpacity> */}
 
           {/* SEND */}
-          <TouchableOpacity onPress={sendMessage} style={styles.sendBtn}>
+          <TouchableOpacity
+            onPress={() => sendMessage()}
+            style={styles.sendBtn}
+          >
             <Icon
               family="Ionicons"
               name="send"

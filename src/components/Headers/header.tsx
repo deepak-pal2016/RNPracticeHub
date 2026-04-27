@@ -61,7 +61,7 @@ const Header: React.FC<headerProps> = ({
   };
 
   return (
-    <View style={[styles.container, { flex: flexview }]}>
+    <View style={[styles.container, { flex: flexview, backgroundColor:Colors.PRIMARY[700] }]}>
       {showicons && (
         <TouchableOpacity
           activeOpacity={0.6}
@@ -105,7 +105,7 @@ const Header: React.FC<headerProps> = ({
             style={[
               styles.headerTitle,
               //@ts-ignore
-              title?.length > 33 && Typography.BodyRegular16,
+              title?.length > 33 && Typography.BodyRegular12,
             ]}
           >
             {title}

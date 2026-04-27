@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { FC, useContext } from 'react';
+import React, { FC, useContext, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -14,22 +14,33 @@ import { HomeStackProps } from 'src/@types';
 import { ThemeContext } from '../../../context/themeContext';
 import { DarkTheme, Header, LightTheme, TextView } from '@components/index';
 import usersStyles from '@styles/usersStyles';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { UserData, UserDataContext } from '../../../context/userDataContext';
 import Colors from '@constant/colors';
 import Typography from '@constant/fontSize';
 import { useNavigation } from '@react-navigation/native';
+import Socket from '@services/socket/socket';
+import { setOnlineUsers } from '@redux/slices/userSlice';
+//@ts-ignore
+import type { AppDispatch } from '@redux/store';
+
 type UsersscreenNavigationType = NativeStackNavigationProp<
   HomeStackProps,
   'Users'
 >;
 
 const Users: FC = () => {
+    const dispatch = useDispatch<AppDispatch>();
   const { theme } = useContext(ThemeContext);
   const navigation = useNavigation<UsersscreenNavigationType>()
   const currentTheme = theme === 'light' ? LightTheme : DarkTheme;
   const styles = usersStyles(currentTheme);
   const { userData, setIsLoggedIn } = useContext<UserData>(UserDataContext);
+  const onlineusers = useSelector(
+  (state: any) => state?.onlineuser?.users
+);
+  console.log('=3333onlineuser',onlineusers);
+  
   const userState = useSelector(
     (state: any) => state?.userlist?.userlist?.data,
   );
@@ -71,7 +82,11 @@ const avatarBaseStyle = {
   alignItems: 'center' as const,
 };
 
+
+
+
   const renderItem = ({ item }: any) => {
+    const isOnline = onlineusers.includes(String(item._id)); // ✅
     return (
       <TouchableOpacity onPress={()=> navigation.navigate('Userchat', {'reciever':item})} style={styles.card}>
         <View

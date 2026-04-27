@@ -43,6 +43,7 @@ import { UserData, UserDataContext } from '../../../context/userDataContext';
 import { LocalStorage } from '@helpers/localstorage';
 import { logout } from '@services/rtkquery/fetures/auth/authslice';
 import { showError, showSuccess } from '@components/Flashmessge';
+import { Socket } from 'socket.io-client';
 type ProfilescreenNavigationType = NativeStackNavigationProp<
   HomeStackProps,
   'Profile'
@@ -91,6 +92,7 @@ const Profile: FC = () => {
       // const response: any = dispatch(Logoutuser(userData?._id) as any).unwrap();
       // console.log(response, 'logout response');
       await dispatch(Logout());
+      (Socket as any).disconnect?.();
       setIsLoggedIn(false);
     } catch (error: any) {
       console.log(error, 'logout error');
@@ -189,6 +191,7 @@ const Profile: FC = () => {
 
         <View style={[styles.itemview, { top: hp(2) }]}>
           <TouchableOpacity
+            activeOpacity={0.7}
             style={styles.logoutview}
             onPress={() => handlelogout()}
           >

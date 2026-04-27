@@ -11,6 +11,7 @@ import FlashMessage from 'react-native-flash-message';
 import { UserDataContextProvider } from './src/context/index';
 import { LogBox } from 'react-native';
 import messaging from '@react-native-firebase/messaging';
+import Appwrapwer from './src/context/appwrapper';
 
 
 //import { store } from '@services/rtkquery/store'; rtk querey store
@@ -27,17 +28,17 @@ const App = () => {
       //   id: remoteMessage?.data?.taskId,
       // });
     });
-
-  
-
     return unsubscribe;
   }, []);
+
+  
   return (
     <Provider store={store}>
       <ThemeProvider>
         <UserDataContextProvider>
           <CommonLoaderProvider>
             <CommonAlertProvider>
+               <Appwrapwer />
               <Route />
               <FlashMessage position="bottom" />
             </CommonAlertProvider>

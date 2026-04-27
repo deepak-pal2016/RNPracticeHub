@@ -98,9 +98,13 @@ const Login: FC = () => {
             await LocalStorage.save('@user', response?.data);
             await LocalStorage.save('@token', response?.data?.token);
             await LocalStorage.save('@login', true);
-            setIsLoggedIn(true)
+            setIsLoggedIn(true);
             setUserData(response?.data);
-            Socket.emit('join', response?.data?._id)
+            if (response?.data?._id) {
+              Socket.connect();
+              Socket.emit('user_online', response?.data?._id);
+            }
+            console.log(response?.data?._id, '===2');
             showSuccess('Login Successfully');
           } else {
             showError(response?.message || 'Login failed');

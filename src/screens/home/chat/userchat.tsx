@@ -183,32 +183,9 @@ const Userchat: FC<any> = props => {
             {item.message}
           </TextView>
 
-          {item.messageType === 'audio' ? (
+          {item.messageType === 'audio' && (
             <AudioPlayer url={item.mediaUrl} />
-          ) : (
-            <TextView>{item.message}</TextView>
           )}
-
-          {/* Media (optional) */}
-          {item?.mediaUrl && (
-            <TextView
-              style={{
-                marginTop: 5,
-                color: isMe ? Colors.SECONDARY[100] : Colors.SECONDARY[200],
-                fontSize: 12,
-              }}
-            >
-              {item.mediaUrl}
-            </TextView>
-          )}
-
-          {/* {item.messageType === 'audio' && (
-            <TouchableOpacity onPress={() => playAudio(item.mediaUrl)}>
-              <TextView>▶️ Play Voice</TextView>
-            </TouchableOpacity>
-          )} */}
-
-          {/* Time */}
 
           <TextView
             style={{

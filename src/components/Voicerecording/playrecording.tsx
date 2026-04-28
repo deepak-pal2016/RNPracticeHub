@@ -1,22 +1,37 @@
 import React, { useState } from 'react';
-import { TouchableOpacity, Text } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
+import TextView from '@components/TextView/textView';
+import { Icon, Colors } from '@constant/index';
 import Sound from 'react-native-sound';
 
+
+let currentSound: Sound | null = null;
+let currentUrl: string | null = null;
+
 const AudioPlayer = ({ url }: { url: string }) => {
-  const [sound, setSound] = useState<Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
   const playAudio = () => {
-    if (sound) {
-      sound.stop(() => {
-        sound.release();
-        setSound(null);
+    // 👉 Same audio pe click = stop
+    if (currentUrl === url && currentSound) {
+      currentSound.stop(() => {
+        currentSound?.release();
+        currentSound = null;
+        currentUrl = null;
         setIsPlaying(false);
       });
       return;
     }
 
-    const audio = new Sound(url, null, (error:any) => {
+    
+    if (currentSound) {
+      currentSound.stop(() => {
+        currentSound?.release();
+        currentSound = null;
+      });
+    }
+
+    const audio = new Sound(url, null, (error: any) => {
       if (error) {
         console.log('play error', error);
         return;
@@ -24,18 +39,32 @@ const AudioPlayer = ({ url }: { url: string }) => {
 
       audio.play(() => {
         audio.release();
-        setSound(null);
+        currentSound = null;
+        currentUrl = null;
         setIsPlaying(false);
       });
     });
 
-    setSound(audio);
+    currentSound = audio;
+    currentUrl = url;
     setIsPlaying(true);
   };
 
+  const isCurrentPlaying = currentUrl === url && isPlaying;
+
   return (
     <TouchableOpacity onPress={playAudio}>
-      <Text>{isPlaying ? '⏸ Pause' : '▶️ Play Audio'}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Icon
+          name={isCurrentPlaying ? 'pause' : 'play'}
+          family="Ionicons"
+          size={20}
+          color={Colors.SECONDARY[100]}
+        />
+        {/* <TextView>
+          {isCurrentPlaying ? 'Pause' : 'Play'}
+        </TextView> */}
+      </View>
     </TouchableOpacity>
   );
 };

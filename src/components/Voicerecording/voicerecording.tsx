@@ -1,5 +1,5 @@
 import React, { FC, useEffect, useState, useRef } from 'react';
-import { TouchableOpacity, PermissionsAndroid, Platform } from 'react-native';
+import { TouchableOpacity, PermissionsAndroid, View } from 'react-native';
 import AudioRecord from 'react-native-audio-record';
 import { Icon } from '@constant/index';
 
@@ -10,41 +10,54 @@ type voiceRecordProps = {
 const Voicerecorder: FC<voiceRecordProps> = ({ onSend }) => {
   const [recording, setRecording] = useState<boolean>(false);
   const isReady = useRef(false);
+  const isRecordingRef = useRef(false);
 
   useEffect(() => {
-    const init = async () => {
-      AudioRecord.init({
-        sampleRate: 16000,
-        channels: 1,
-        bitsPerSample: 16,
-        wavFile: 'voice.wav',
-      });
+    AudioRecord.init({
+      sampleRate: 16000,
+      channels: 1,
+      bitsPerSample: 16,
+      audioSource: 6, // 🔥 better for voice
+      wavFile: 'voice.wav',
+    });
 
-      isReady.current = true;
+    isReady.current = true;
+
+    return () => {
+      AudioRecord.stop();
     };
-
-    init();
   }, []);
 
   const requestpermission = async () => {
-    if (Platform.OS === 'android') {
-      await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
-      );
-    }
+    const granted = await PermissionsAndroid.requestMultiple([
+      PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+    ]);
+
+    return (
+      granted['android.permission.RECORD_AUDIO'] === 'granted'
+    );
   };
 
   const startrecording = async () => {
     try {
-      if (!isReady.current) {
-        console.log('AudioRecord not ready');
+      if (!isReady.current || isRecordingRef.current) return;
+
+      const hasPermission = await requestpermission();
+      if (!hasPermission) {
+        console.log('Mic permission denied');
         return;
       }
 
-      await requestpermission();
+      await AudioRecord.start();
 
-      AudioRecord.start();
+      isRecordingRef.current = true;
       setRecording(true);
+
+      // 🔍 Debug mic input
+      AudioRecord.on('data', data => {
+        // console.log('mic working...');
+      });
+
     } catch (error) {
       console.log('start error:', error);
     }
@@ -52,12 +65,17 @@ const Voicerecorder: FC<voiceRecordProps> = ({ onSend }) => {
 
   const stoprecording = async () => {
     try {
+      if (!isRecordingRef.current) return;
+
       const filepath = await AudioRecord.stop();
+
+      isRecordingRef.current = false;
       setRecording(false);
 
-      console.log('record file', filepath);
-
-      onSend(filepath);
+      if (filepath) {
+        console.log('record file:', filepath);
+        onSend(filepath);
+      }
     } catch (err) {
       console.log('stop error:', err);
     }
@@ -66,15 +84,20 @@ const Voicerecorder: FC<voiceRecordProps> = ({ onSend }) => {
   return (
     <TouchableOpacity
       onPressIn={startrecording}
-      onPressOut={stoprecording}
+      onPressOut={() => {
+        // 🔥 avoid instant tap issue
+        setTimeout(stoprecording, 200);
+      }}
       style={{ padding: 10 }}
     >
-      <Icon
-        name={recording ? 'mic' : 'mic-outline'}
-        size={26}
-        family="Ionicons"
-        color={recording ? 'red' : 'black'}
-      />
+      <View>
+        <Icon
+          name={recording ? 'mic' : 'mic-outline'}
+          size={26}
+          family="Ionicons"
+          color={recording ? 'red' : 'black'}
+        />
+      </View>
     </TouchableOpacity>
   );
 };
